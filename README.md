@@ -1,4 +1,7 @@
-# MRG-Python-OleggrHW
-Repository for MRG-Python course
+# Репозиторий для домашнего задания
 
-Hello world!
+Я - Гритчин Олег и это мой репозиторий
+
+'''
+print('Hello world!')
+'''
