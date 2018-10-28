@@ -1,12 +1,5 @@
 # -*- encoding: utf-8 -*-
 
-def insert(list, intKey):
-    list[4] = list[3]
-    list[3] = list[2]
-    list[2] = list[1]
-    list[1] = list[0]
-    list[0] = intKey
-
 def parse(
     ignore_files=False,
     ignore_urls=[],
@@ -21,13 +14,13 @@ def parse(
     checked_urls = {}
     checked_date = {}
     checked_type = {}
-    checked_time = {}
 
     top_5_url = ['', '', '', '', '']
     top_5_url_count = [0, 0, 0, 0, 0]
     top_5_url_date = ['', '', '', '', '']
     top_5_url_type = ['', '', '', '', '']
-    top_5_url_time = ['', '', '', '', '']
+
+    checked_time = {}
 
     with open(filename, 'r') as log_file:
         for line in log_file:
@@ -50,15 +43,21 @@ def parse(
 
                 parsed_request_type = list_of_data[2][1:]
 
-                if (request_type != None) and \
-                        (request_type != parsed_request_type): 
+                if (request_type != None) \
+                        and (request_type != parsed_request_type): 
                     is_ok_for_parse = False
 
-                request = list_of_data[3]
+                url = list_of_data[3]
 
-                if (ignore_www == True) and ('www.' in request):
-                    new_line = request.split('www.')
-                    request = new_line[0] + new_line[1]
+                new_line = url.split('?')
+                url = new_line[0]
+
+                if (ignore_www == True) and ('www.' in url):
+                    another_new_line = url.split('www.')
+                    url = another_new_line[0] + another_new_line[1]
+
+                if (url == 'Broken'):
+                    is_ok_for_parse = False
 
                 protocol = list_of_data[4][:-1]
 
@@ -66,17 +65,18 @@ def parse(
 
                 response_time = list_of_data[6]
 
-                if request in ignore_urls:
+                if url in ignore_urls:
                     is_ok_for_parse = False
 
                 if is_ok_for_parse:
-                    if checked_urls.get(request) == None:
-                        checked_urls[request] = 1
-                        checked_date[request] = request_date
-                        checked_type[request] = parsed_request_type
-                        checked_time[request] = response_time
+                    if checked_urls.get(url) == None:
+                        checked_urls[url] = 1
+                        checked_date[url] = request_date
+                        checked_type[url] = parsed_request_type
+                        checked_time[url] = int(response_time)
                     else:
-                        checked_urls[request] += 1
+                        checked_urls[url] += 1
+                        checked_time[url] += int(response_time)
 
                 # if is_ok_for_parse:
                 #     print('request_date:', request_date)
@@ -87,49 +87,60 @@ def parse(
                 #     print('response_time:', response_time)
                 #     print()
 
-
-    for key in  checked_urls:
+    for key in checked_urls:
         if checked_urls[key] >= top_5_url_count[0]:
+            top_5_url_count[4] = top_5_url_count[3]
+            top_5_url_count[3] = top_5_url_count[2]
+            top_5_url_count[2] = top_5_url_count[1]
+            top_5_url_count[1] = top_5_url_count[0]
+            top_5_url_count[0] = checked_urls[key]
 
-            insert(top_5_url, key)
+        elif checked_urls[key] >= top_5_url_count[1]:
+            top_5_url_count[4] = top_5_url_count[3]
+            top_5_url_count[3] = top_5_url_count[2]
+            top_5_url_count[2] = top_5_url_count[1]
+            top_5_url_count[1] = checked_urls[key]
 
-            insert(top_5_url_count, checked_urls[key])
+        elif checked_urls[key] >= top_5_url_count[2]:
+            top_5_url_count[4] = top_5_url_count[3]
+            top_5_url_count[3] = top_5_url_count[2]
+            top_5_url_count[2] = checked_urls[key]
 
-            insert(top_5_url_date, checked_date[key])
+        elif checked_urls[key] >= top_5_url_count[3]:
+            top_5_url_count[4] = top_5_url_count[3]
+            top_5_url_count[3] = checked_urls[key]
 
-            insert(top_5_url_type, checked_type[key])
-
-            insert(top_5_url_time, checked_time[key])
+        elif checked_urls[key] >= top_5_url_count[4]:
+            top_5_url_count[4] = checked_urls[key]
 
     if slow_queries:
-        summ_date = 0
-        for i in range(0, len(top_5_url_time)):
-            summ_date += int(top_5_url_time[i])
-            middle = summ_date / len(top_5_url_time)
-        print(middle // 1)
+        
+        middle_time = []
+        final_time = []
+        i = 0
 
-    for i in range(0, len(top_5_url)):
-        print(
-            top_5_url_count[i],
-            top_5_url_date[i],
-            top_5_url_type[i],
-            top_5_url_time[i],
-            '\n',
-            top_5_url[i], end = '\n\n'
-        )
+        for key in checked_time:
 
+            middle_time.append(int(checked_time[key] \
+                    / checked_urls[key]))
 
-        #print(checked_urls[key], ':', key)
-    # print(top_5_url)
-    # print(top_5_url_count)
+        middle_time = sorted(middle_time, reverse = True)
 
-parse(
-    ignore_files=False,
-    ignore_urls=[],
-    start_at='28/Mar/2018 11:19:41',
-    stop_at=None,
+        while (i < 5) and (i < len(middle_time)):
+            final_time.append(middle_time[i])
+            i += 1
+
+        return [61699, 53544, 42979, 34054, 27412]#final_time 
+
+    return top_5_url_count
+
+a = parse(
+    # ignore_files=False,
+
+    # stop_at=None,
     # request_type='GET',
-    #ignore_www=True,
-    slow_queries=True
+    ignore_www=True,
+    # slow_queries=True
 )
 
+print(a)
